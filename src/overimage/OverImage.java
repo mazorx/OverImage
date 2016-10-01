@@ -478,15 +478,15 @@ public class OverImage extends javax.swing.JFrame {
         int wwid = this.getWidth();
         int hhei = this.getHeight();
         int dif = 3;
-        int bs = 2;
+        int bs = 1;
         g2.setComposite(AlphaComposite.SrcOver.derive(imgalpha));
         g2.drawImage(srcImg, (fliph > 0 ? imageX : imageX + w), (flipv > 0 ? imageY : imageY + h), w * fliph, h * flipv, null);
         g2.setColor(this.getBackground());
         g2.fillRect(0, 0, wwid, hhei - dif);
-        g2.setColor(new Color(0f, 0f, 0f, 1f));
+        g2.setColor(new Color(0.2f, 0.2f, 0.2f, 1f));
         g2.setStroke(new BasicStroke(bs));
         g2.drawRect(0, 0, wwid - dif, hhei - dif);
-        g2.setColor(new Color(1f, 1f, 1f, 1f));
+        g2.setColor(new Color(0.8f, 0.8f, 0.8f, 1f));
         g2.drawRect(bs, bs, wwid - dif - bs * 2, hhei - dif - bs * 2);
         g2.setFont(new Font("Arial Black", Font.PLAIN, 25));
         g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
