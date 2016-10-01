@@ -6,6 +6,7 @@ Ctrl + V -> load an image
 Drag and drop -> load an image 
 Escape -> Exit 
 Space -> Pan image 
+Mouse Wheel -> Zoom in/out
 D -> Set image to default size 
 F -> Flip image horizontal 
 V -> Flip image vertical 
