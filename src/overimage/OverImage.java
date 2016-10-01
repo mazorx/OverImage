@@ -1,30 +1,24 @@
 package overimage;
 
+import com.sun.awt.AWTUtilities;
 import com.sun.glass.events.KeyEvent;
-import java.awt.AWTException;
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.FontMetrics;
 import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
+import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.MouseInfo;
-import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.RenderingHints;
-import java.awt.Robot;
+import java.awt.SplashScreen;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetDropEvent;
-import java.awt.font.FontRenderContext;
-import java.awt.font.TextLayout;
 import java.awt.image.BufferedImage;
 import java.awt.image.FilteredImageSource;
 import java.awt.image.ImageFilter;
@@ -36,6 +30,10 @@ import java.text.NumberFormat;
 import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 
 /**
  *
@@ -43,42 +41,79 @@ import javax.swing.ImageIcon;
  */
 public class OverImage extends javax.swing.JFrame {
 
-    int difx = 0;
-    int dify = 0;
     boolean scalingx = false;
     boolean scalingy = false;
     boolean scaledragx = false;
     boolean scaledragy = false;
     boolean draging = false;
+    boolean defaultsize = false;
+    boolean hvisible = true;
+    static int bordersize = 20;
+    static Double bigzoomstep = 0.15;
+    static Double zoomstep = 0.02;
+    static Double minzoom = 0.01;
+    int difx = 0;
+    int dify = 0;
     int prevx = 0;
     int prevy = 0;
     int clickedx = 0;
     int clickedy = 0;
     int currentcursor = 0;
-    Image originalimage;
-    Image showingimage;
-    Double zoom = 1.0;
-    Double scaleimagepercent = 1.0;
     int fliph = 1;
     int flipv = 1;
-    static int bordersize = 20;
-    static Double bigzoomstep = 0.15;
-    static Double zoomstep = 0.02;
-    static Double minzoom = 0.01;
     int imageX = 0;
     int imageY = 0;
     int clickedimageX = 0;
     int clickedimageY = 0;
-    NumberFormat formatter = new DecimalFormat("#0.00");
-    boolean defaultsize = false;
     float imgalpha = 1f;
     float alphastep = 0.1f;
+    Image originalimage;
+    Image showingimage;
+    JLabel display;
+    Double zoom = 1.0;
+    Double scaleimagepercent = 1.0;
+    NumberFormat formatter = new DecimalFormat("#0.00");
+    JLabel holder;
 
     /**
      * Creates new form OverImage
      */
     public OverImage() {
         initComponents();
+        display = new JLabel();
+        panelBorder.add(display);
+        display.setSize(this.getWidth(), this.getHeight());
+        display.setLocation(0, 0);
+        display.setHorizontalAlignment(SwingConstants.LEFT);
+        display.setVerticalAlignment(SwingConstants.TOP);
+        display.setVisible(true);
+        
+        holder = new JLabel();
+        panelBorder.add(holder);
+        holder.setSize(this.getWidth(), this.getHeight());
+        holder.setLocation(0, 0);
+        holder.setHorizontalAlignment(SwingConstants.LEFT);
+        holder.setVerticalAlignment(SwingConstants.TOP);
+        holder.setVisible(true);
+        holder.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            public void mouseDragged(java.awt.event.MouseEvent evt) {
+                holderMouseDragged(evt);
+            }
+
+            public void mouseMoved(java.awt.event.MouseEvent evt) {
+                holderMouseMoved(evt);
+            }
+        });
+        holder.addMouseWheelListener(new java.awt.event.MouseWheelListener() {
+            public void mouseWheelMoved(java.awt.event.MouseWheelEvent evt) {
+                holderMouseWheelMoved(evt);
+            }
+        });
+        holder.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                holderMousePressed(evt);
+            }
+        });
         holder.setDropTarget(new DropTarget() {
             public synchronized void drop(DropTargetDropEvent evt) {
                 try {
@@ -94,6 +129,7 @@ public class OverImage extends javax.swing.JFrame {
                 }
             }
         });
+        this.setSize(200, 200);
     }
 
     @SuppressWarnings("unchecked")
@@ -101,10 +137,10 @@ public class OverImage extends javax.swing.JFrame {
     private void initComponents() {
 
         panelBorder = new javax.swing.JPanel();
-        holder = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setAlwaysOnTop(true);
+        setBounds(new java.awt.Rectangle(0, 0, 0, 0));
         setLocation(new java.awt.Point(200, 200));
         setUndecorated(true);
         addKeyListener(new java.awt.event.KeyAdapter() {
@@ -118,36 +154,15 @@ public class OverImage extends javax.swing.JFrame {
 
         panelBorder.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
 
-        holder.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        holder.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-        holder.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
-            public void mouseDragged(java.awt.event.MouseEvent evt) {
-                holderMouseDragged(evt);
-            }
-            public void mouseMoved(java.awt.event.MouseEvent evt) {
-                holderMouseMoved(evt);
-            }
-        });
-        holder.addMouseWheelListener(new java.awt.event.MouseWheelListener() {
-            public void mouseWheelMoved(java.awt.event.MouseWheelEvent evt) {
-                holderMouseWheelMoved(evt);
-            }
-        });
-        holder.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                holderMousePressed(evt);
-            }
-        });
-
         javax.swing.GroupLayout panelBorderLayout = new javax.swing.GroupLayout(panelBorder);
         panelBorder.setLayout(panelBorderLayout);
         panelBorderLayout.setHorizontalGroup(
             panelBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(holder, javax.swing.GroupLayout.DEFAULT_SIZE, 328, Short.MAX_VALUE)
+            .addGap(0, 333, Short.MAX_VALUE)
         );
         panelBorderLayout.setVerticalGroup(
             panelBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(holder, javax.swing.GroupLayout.DEFAULT_SIZE, 238, Short.MAX_VALUE)
+            .addGap(0, 229, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -164,6 +179,17 @@ public class OverImage extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    public void freezePane() {
+        hvisible = false;
+        holder.setVisible(false);
+        this.setCursor(0);
+    }
+    
+    public void unfreezePane() {
+        hvisible = true;
+        holder.setVisible(true);
+    }
+
     private void formKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_formKeyPressed
         if (evt.isControlDown()) {
             if (evt.getKeyCode() == KeyEvent.VK_V) {
@@ -179,24 +205,58 @@ public class OverImage extends javax.swing.JFrame {
             if (evt.getKeyCode() == KeyEvent.VK_ESCAPE) {
                 System.exit(0);
             }
-            if (evt.getKeyCode() == KeyEvent.VK_SPACE) {
-                draging = true;
-                currentcursor = 13;
-                this.setCursor(currentcursor);
+            if (evt.getKeyCode() == KeyEvent.VK_Q) {
+                freezePane();
             }
-            if (evt.getKeyCode() == KeyEvent.VK_PLUS) {
+            if (evt.getKeyCode() == KeyEvent.VK_W) {
+                unfreezePane();
+            }
+            if (evt.getKeyCode() == KeyEvent.VK_SPACE) {
+                if(hvisible){
+                    draging = true;
+                    currentcursor = 13;
+                    this.setCursor(currentcursor);
+                }
+            }
+            if (evt.getKeyCode() == KeyEvent.VK_Z) {
+                if ((originalimage.getWidth(null) * zoom) * scaleimagepercent < originalimage.getWidth(null)) {
+                    if (evt.isShiftDown()) {
+                        zoom += bigzoomstep;
+                    } else {
+                        zoom += zoomstep;
+                    }
+                } else {
+                    zoom = (originalimage.getWidth(null) / scaleimagepercent) / originalimage.getWidth(null);
+                }
+                setimgtosize();
+            }
+            if (evt.getKeyCode() == KeyEvent.VK_X) {
+                if (zoom > 0.01 & (zoom - (evt.isShiftDown() ? bigzoomstep : zoomstep) > zoomstep)) {
+                    if (evt.isShiftDown()) {
+                        zoom -= bigzoomstep;
+                    } else {
+                        zoom -= zoomstep;
+                    }
+                } else {
+                    zoom = minzoom;
+                }
+                setimgtosize();
+            }
+            if (evt.getKeyCode() == KeyEvent.VK_PLUS | evt.getKeyCode() == KeyEvent.VK_ADD | evt.getKeyCode() == KeyEvent.VK_S) {
                 if (imgalpha + alphastep <= 1) {
                     imgalpha += alphastep;
                 } else {
                     imgalpha = 1;
                 }
+                setimgtosize();
             }
-            if (evt.getKeyCode() == KeyEvent.VK_MINUS) {
+            if (evt.getKeyCode() == KeyEvent.VK_MINUS | evt.getKeyCode() == KeyEvent.VK_SUBTRACT | evt.getKeyCode() == KeyEvent.VK_A) {
                 if (imgalpha - alphastep >= 0.01) {
                     imgalpha -= alphastep;
                 } else {
                     imgalpha = 0.01f;
                 }
+                setimgtosize();
             }
             if (evt.getKeyCode() == KeyEvent.VK_F) {
                 try {
@@ -209,6 +269,14 @@ public class OverImage extends javax.swing.JFrame {
                 try {
                     flipv *= -1;
                     setimgtosize();
+                } catch (Exception e) {
+                }
+            }
+            if (evt.getKeyCode() == KeyEvent.VK_R) {
+                try {
+                    int x = ((Double)MouseInfo.getPointerInfo().getLocation().getX()).intValue();
+                    int y = ((Double)MouseInfo.getPointerInfo().getLocation().getY()).intValue();
+                    this.setLocation(x-(this.getWidth()/2),y-(this.getHeight()/2));
                 } catch (Exception e) {
                 }
             }
@@ -263,7 +331,7 @@ public class OverImage extends javax.swing.JFrame {
         return null;
     }
 
-    private void holderMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_holderMousePressed
+    private void holderMousePressed(java.awt.event.MouseEvent evt) {
         difx = evt.getXOnScreen() - this.getX();
         dify = evt.getYOnScreen() - this.getY();
         prevx = this.getWidth();
@@ -272,9 +340,9 @@ public class OverImage extends javax.swing.JFrame {
         clickedy = evt.getYOnScreen();
         clickedimageX = imageX;
         clickedimageY = imageY;
-    }//GEN-LAST:event_holderMousePressed
+    }
 
-    private void holderMouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_holderMouseDragged
+    private void holderMouseDragged(java.awt.event.MouseEvent evt) {
         if (draging) {
             imageX = clickedimageX + (evt.getXOnScreen() - clickedx);
             imageY = clickedimageY + (evt.getYOnScreen() - clickedy);
@@ -305,11 +373,11 @@ public class OverImage extends javax.swing.JFrame {
         } else {
             this.setLocation(evt.getXOnScreen() - difx, evt.getYOnScreen() - dify);
         }
-    }//GEN-LAST:event_holderMouseDragged
+    }
 
-    private void holderMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_holderMouseMoved
+    private void holderMouseMoved(java.awt.event.MouseEvent evt) {
         setnormalcursor();
-    }//GEN-LAST:event_holderMouseMoved
+    }
 
     private void setnormalcursor() {
         try {
@@ -371,6 +439,9 @@ public class OverImage extends javax.swing.JFrame {
                 }
                 this.setCursor(currentcursor);
             }
+            if(!hvisible){
+                this.setCursor(0);
+            }
         } catch (Exception e) {
 
         }
@@ -382,7 +453,7 @@ public class OverImage extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_formKeyReleased
 
-    private void holderMouseWheelMoved(java.awt.event.MouseWheelEvent evt) {//GEN-FIRST:event_holderMouseWheelMoved
+    private void holderMouseWheelMoved(java.awt.event.MouseWheelEvent evt) {
         if (evt.getWheelRotation() < 0) {
             if (evt.isControlDown()) {
                 if (imgalpha + alphastep <= 1) {
@@ -399,75 +470,91 @@ public class OverImage extends javax.swing.JFrame {
             } else {
                 zoom = (originalimage.getWidth(null) / scaleimagepercent) / originalimage.getWidth(null);
             }
-        } else {
-            if (evt.isControlDown()) {
-                if (imgalpha - alphastep >= 0.01) {
-                    imgalpha -= alphastep;
-                } else {
-                    imgalpha = 0.01f;
-                }
-            }else if (zoom > 0.01 & (zoom - (evt.isShiftDown() ? bigzoomstep : zoomstep) > zoomstep)) {
-                if (evt.isShiftDown()) {
-                    zoom -= bigzoomstep;
-                } else {
-                    zoom -= zoomstep;
-                }
+        } else if (evt.isControlDown()) {
+            if (imgalpha - alphastep >= 0.01) {
+                imgalpha -= alphastep;
             } else {
-                zoom = minzoom;
+                imgalpha = 0.01f;
             }
+        } else if (zoom > 0.01 & (zoom - (evt.isShiftDown() ? bigzoomstep : zoomstep) > zoomstep)) {
+            if (evt.isShiftDown()) {
+                zoom -= bigzoomstep;
+            } else {
+                zoom -= zoomstep;
+            }
+        } else {
+            zoom = minzoom;
         }
         setimgtosize();
-    }//GEN-LAST:event_holderMouseWheelMoved
-
-    private void setimgtosize() {
-        panelBorder.setBackground(new Color(1.0f, 1.0f, 1.0f, 0.01f));
-        this.setBackground(new Color(1.0f, 1.0f, 1.0f, 0.01f));
-        if (defaultsize) {
-            scaleimagepercent = 1.0;
-            zoom = 1.0;
-        } else {
-            boolean continuar = true;
-            Double imagezsp = originalimage.getWidth(null) * zoomstep;
-            if (originalimage.getWidth(null) > originalimage.getHeight(null)) {
-                while (continuar) {
-                    if (originalimage.getWidth(null) * (scaleimagepercent + zoomstep) > this.getWidth() + imagezsp * 2) {
-                        scaleimagepercent -= zoomstep;
-                    } else if (originalimage.getWidth(null) * (scaleimagepercent - zoomstep) < this.getWidth() - imagezsp * 2) {
-                        scaleimagepercent += zoomstep;
-                    } else {
-                        continuar = false;
-                    }
-                }
-                if ((originalimage.getWidth(null) * zoom) * scaleimagepercent > originalimage.getWidth(null)) {
-                    zoom = (originalimage.getWidth(null) / scaleimagepercent) / originalimage.getWidth(null);
-                }
-                if (this.getWidth() > originalimage.getWidth(null)) {
-                    zoom = (originalimage.getWidth(null) / scaleimagepercent) / originalimage.getWidth(null);
-                }
-            } else {
-                while (continuar) {
-                    if (originalimage.getHeight(null) * (scaleimagepercent + zoomstep) > this.getHeight() + imagezsp * 2) {
-                        scaleimagepercent -= zoomstep;
-                    } else if (originalimage.getHeight(null) * (scaleimagepercent - zoomstep) < this.getHeight() - imagezsp * 2) {
-                        scaleimagepercent += zoomstep;
-                    } else {
-                        continuar = false;
-                    }
-                }
-                if ((originalimage.getHeight(null) * zoom) * scaleimagepercent > originalimage.getHeight(null)) {
-                    zoom = (originalimage.getHeight(null) / scaleimagepercent) / originalimage.getHeight(null);
-                }
-                if (this.getHeight() > originalimage.getHeight(null)) {
-                    zoom = (originalimage.getHeight(null) / scaleimagepercent) / originalimage.getHeight(null);
-                }
-            }
-        }
-        showingimage = getimgtoshow();
-        holder.setIcon(new ImageIcon(showingimage));
     }
 
-    private Image getimgtoshow() {
-        return getScaledImage(originalimage, ((Double) ((originalimage.getWidth(null) * zoom) * scaleimagepercent)).intValue(), ((Double) ((originalimage.getHeight(null) * zoom) * scaleimagepercent)).intValue());
+    private void setimgtosize() {
+        if (originalimage != null) {
+            panelBorder.setBackground(new Color(1f, 1f, 1f, 0f));
+            this.setBackground(new Color(1f, 1f, 1f, 0f));
+//            this.setSize(Toolkit.getDefaultToolkit().getScreenSize());
+//            this.setLocation(0, 0);
+//            holder.setSize(this.getSize());
+            if (defaultsize) {
+                scaleimagepercent = 1.0;
+                zoom = 1.0;
+            } else {
+                boolean continuar = true;
+                Double imagezsp = originalimage.getWidth(null) * zoomstep;
+                if (originalimage.getWidth(null) > originalimage.getHeight(null)) {
+                    while (continuar) {
+                        if (originalimage.getWidth(null) * (scaleimagepercent + zoomstep) > this.getWidth() + imagezsp * 2) {
+                            scaleimagepercent -= zoomstep;
+                        } else if (originalimage.getWidth(null) * (scaleimagepercent - zoomstep) < this.getWidth() - imagezsp * 2) {
+                            scaleimagepercent += zoomstep;
+                        } else {
+                            continuar = false;
+                        }
+                    }
+                    if ((originalimage.getWidth(null) * zoom) * scaleimagepercent > originalimage.getWidth(null)) {
+                        zoom = (originalimage.getWidth(null) / scaleimagepercent) / originalimage.getWidth(null);
+                    }
+                    if (this.getWidth() > originalimage.getWidth(null)) {
+                        zoom = (originalimage.getWidth(null) / scaleimagepercent) / originalimage.getWidth(null);
+                    }
+                } else {
+                    while (continuar) {
+                        if (originalimage.getHeight(null) * (scaleimagepercent + zoomstep) > this.getHeight() + imagezsp * 2) {
+                            scaleimagepercent -= zoomstep;
+                        } else if (originalimage.getHeight(null) * (scaleimagepercent - zoomstep) < this.getHeight() - imagezsp * 2) {
+                            scaleimagepercent += zoomstep;
+                        } else {
+                            continuar = false;
+                        }
+                    }
+                    if ((originalimage.getHeight(null) * zoom) * scaleimagepercent > originalimage.getHeight(null)) {
+                        zoom = (originalimage.getHeight(null) / scaleimagepercent) / originalimage.getHeight(null);
+                    }
+                    if (this.getHeight() > originalimage.getHeight(null)) {
+                        zoom = (originalimage.getHeight(null) / scaleimagepercent) / originalimage.getHeight(null);
+                    }
+                }
+            }
+            holder.setVisible(false);
+            display.setVisible(false);
+            this.repaint();
+            holder.setLocation(0, 0);
+            holder.setSize(this.getSize());
+            showingimage = getScaledImage(originalimage, ((Double) ((originalimage.getWidth(null) * zoom) * scaleimagepercent)).intValue(), ((Double) ((originalimage.getHeight(null) * zoom) * scaleimagepercent)).intValue());
+            holder.setIcon(new ImageIcon(showingimage));
+            
+            display.setLocation(0,0);
+            display.setSize(this.getSize());
+            display.setIcon(new ImageIcon(showingimage));
+        }
+        holder.setLocation(0, 0);
+        holder.setSize(this.getSize());
+        holder.setVisible(true);
+        display.setLocation(0, 0);
+        display.setSize(this.getSize());
+        this.repaint();
+        display.setVisible(true);
+        holder.setVisible(hvisible);
     }
 
     private Image getScaledImage(Image srcImg, int w, int h) {
@@ -481,7 +568,7 @@ public class OverImage extends javax.swing.JFrame {
         int bs = 1;
         g2.setComposite(AlphaComposite.SrcOver.derive(imgalpha));
         g2.drawImage(srcImg, (fliph > 0 ? imageX : imageX + w), (flipv > 0 ? imageY : imageY + h), w * fliph, h * flipv, null);
-        g2.setColor(this.getBackground());
+        g2.setColor(new Color(1f, 1f, 1f, 0.01f));
         g2.fillRect(0, 0, wwid, hhei - dif);
         g2.setColor(new Color(0.2f, 0.2f, 0.2f, 1f));
         g2.setStroke(new BasicStroke(bs));
@@ -489,7 +576,7 @@ public class OverImage extends javax.swing.JFrame {
         g2.setColor(new Color(0.8f, 0.8f, 0.8f, 1f));
         g2.drawRect(bs, bs, wwid - dif - bs * 2, hhei - dif - bs * 2);
         g2.setFont(new Font("Arial Black", Font.PLAIN, 25));
-        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        //g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
         g2.dispose();
         return resizedImg;
@@ -510,6 +597,7 @@ public class OverImage extends javax.swing.JFrame {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
+        
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
@@ -542,7 +630,6 @@ public class OverImage extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel holder;
     private javax.swing.JPanel panelBorder;
     // End of variables declaration//GEN-END:variables
 }
