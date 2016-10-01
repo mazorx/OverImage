@@ -2,6 +2,7 @@ package overimage;
 
 import com.sun.glass.events.KeyEvent;
 import java.awt.AWTException;
+import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
@@ -25,6 +26,10 @@ import java.awt.dnd.DropTargetDropEvent;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.awt.image.BufferedImage;
+import java.awt.image.FilteredImageSource;
+import java.awt.image.ImageFilter;
+import java.awt.image.ImageProducer;
+import java.awt.image.RGBImageFilter;
 import java.io.File;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -66,6 +71,8 @@ public class OverImage extends javax.swing.JFrame {
     int clickedimageY = 0;
     NumberFormat formatter = new DecimalFormat("#0.00");
     boolean defaultsize = false;
+    float imgalpha = 1f;
+    float alphastep = 0.1f;
 
     /**
      * Creates new form OverImage
@@ -93,6 +100,7 @@ public class OverImage extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        panelBorder = new javax.swing.JPanel();
         holder = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -107,6 +115,8 @@ public class OverImage extends javax.swing.JFrame {
                 formKeyReleased(evt);
             }
         });
+
+        panelBorder.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
 
         holder.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         holder.setVerticalAlignment(javax.swing.SwingConstants.TOP);
@@ -129,15 +139,26 @@ public class OverImage extends javax.swing.JFrame {
             }
         });
 
+        javax.swing.GroupLayout panelBorderLayout = new javax.swing.GroupLayout(panelBorder);
+        panelBorder.setLayout(panelBorderLayout);
+        panelBorderLayout.setHorizontalGroup(
+            panelBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(holder, javax.swing.GroupLayout.DEFAULT_SIZE, 328, Short.MAX_VALUE)
+        );
+        panelBorderLayout.setVerticalGroup(
+            panelBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(holder, javax.swing.GroupLayout.DEFAULT_SIZE, 238, Short.MAX_VALUE)
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(holder, javax.swing.GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE)
+            .addComponent(panelBorder, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(holder, javax.swing.GroupLayout.DEFAULT_SIZE, 241, Short.MAX_VALUE)
+            .addComponent(panelBorder, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         pack();
@@ -162,6 +183,20 @@ public class OverImage extends javax.swing.JFrame {
                 draging = true;
                 currentcursor = 13;
                 this.setCursor(currentcursor);
+            }
+            if (evt.getKeyCode() == KeyEvent.VK_PLUS) {
+                if (imgalpha + alphastep <= 1) {
+                    imgalpha += alphastep;
+                } else {
+                    imgalpha = 1;
+                }
+            }
+            if (evt.getKeyCode() == KeyEvent.VK_MINUS) {
+                if (imgalpha - alphastep >= 0.01) {
+                    imgalpha -= alphastep;
+                } else {
+                    imgalpha = 0.01f;
+                }
             }
             if (evt.getKeyCode() == KeyEvent.VK_F) {
                 try {
@@ -349,7 +384,13 @@ public class OverImage extends javax.swing.JFrame {
 
     private void holderMouseWheelMoved(java.awt.event.MouseWheelEvent evt) {//GEN-FIRST:event_holderMouseWheelMoved
         if (evt.getWheelRotation() < 0) {
-            if ((originalimage.getWidth(null) * zoom) * scaleimagepercent < originalimage.getWidth(null)) {
+            if (evt.isControlDown()) {
+                if (imgalpha + alphastep <= 1) {
+                    imgalpha += alphastep;
+                } else {
+                    imgalpha = 1;
+                }
+            } else if ((originalimage.getWidth(null) * zoom) * scaleimagepercent < originalimage.getWidth(null)) {
                 if (evt.isShiftDown()) {
                     zoom += bigzoomstep;
                 } else {
@@ -358,23 +399,33 @@ public class OverImage extends javax.swing.JFrame {
             } else {
                 zoom = (originalimage.getWidth(null) / scaleimagepercent) / originalimage.getWidth(null);
             }
-        } else if (zoom > 0.01 & (zoom - (evt.isShiftDown() ? bigzoomstep : zoomstep) > zoomstep)) {
-            if (evt.isShiftDown()) {
-                zoom -= bigzoomstep;
-            } else {
-                zoom -= zoomstep;
-            }
         } else {
-            zoom = minzoom;
+            if (evt.isControlDown()) {
+                if (imgalpha - alphastep >= 0.01) {
+                    imgalpha -= alphastep;
+                } else {
+                    imgalpha = 0.01f;
+                }
+            }else if (zoom > 0.01 & (zoom - (evt.isShiftDown() ? bigzoomstep : zoomstep) > zoomstep)) {
+                if (evt.isShiftDown()) {
+                    zoom -= bigzoomstep;
+                } else {
+                    zoom -= zoomstep;
+                }
+            } else {
+                zoom = minzoom;
+            }
         }
         setimgtosize();
     }//GEN-LAST:event_holderMouseWheelMoved
 
     private void setimgtosize() {
-        if(defaultsize){
+        panelBorder.setBackground(new Color(1.0f, 1.0f, 1.0f, 0.01f));
+        this.setBackground(new Color(1.0f, 1.0f, 1.0f, 0.01f));
+        if (defaultsize) {
             scaleimagepercent = 1.0;
             zoom = 1.0;
-        }else{
+        } else {
             boolean continuar = true;
             Double imagezsp = originalimage.getWidth(null) * zoomstep;
             if (originalimage.getWidth(null) > originalimage.getHeight(null)) {
@@ -420,16 +471,39 @@ public class OverImage extends javax.swing.JFrame {
     }
 
     private Image getScaledImage(Image srcImg, int w, int h) {
-        int wid = ((Double)java.awt.Toolkit.getDefaultToolkit().getScreenSize().getWidth()).intValue() + this.getWidth();
-        int hei = ((Double)java.awt.Toolkit.getDefaultToolkit().getScreenSize().getHeight()).intValue() + this.getHeight();
+        int wid = ((Double) java.awt.Toolkit.getDefaultToolkit().getScreenSize().getWidth()).intValue() + this.getWidth();
+        int hei = ((Double) java.awt.Toolkit.getDefaultToolkit().getScreenSize().getHeight()).intValue() + this.getHeight();
         BufferedImage resizedImg = new BufferedImage(wid, hei, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2 = resizedImg.createGraphics();
-        
+        int wwid = this.getWidth();
+        int hhei = this.getHeight();
+        int dif = 3;
+        int bs = 2;
+        g2.setComposite(AlphaComposite.SrcOver.derive(imgalpha));
+        g2.drawImage(srcImg, (fliph > 0 ? imageX : imageX + w), (flipv > 0 ? imageY : imageY + h), w * fliph, h * flipv, null);
+        g2.setColor(this.getBackground());
+        g2.fillRect(0, 0, wwid, hhei - dif);
+        g2.setColor(new Color(0f, 0f, 0f, 1f));
+        g2.setStroke(new BasicStroke(bs));
+        g2.drawRect(0, 0, wwid - dif, hhei - dif);
+        g2.setColor(new Color(1f, 1f, 1f, 1f));
+        g2.drawRect(bs, bs, wwid - dif - bs * 2, hhei - dif - bs * 2);
         g2.setFont(new Font("Arial Black", Font.PLAIN, 25));
         g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        g2.drawImage(srcImg, (fliph > 0 ? imageX : imageX + w), (flipv > 0 ? imageY : imageY + h), w * fliph, h * flipv, null);
+
         g2.dispose();
         return resizedImg;
+    }
+
+    private Image makeColorTransparent(BufferedImage image, int alpha) {
+        ImageFilter filter = new RGBImageFilter() {
+            public final int filterRGB(int x, int y, int rgb) {
+                return (rgb << 8) & alpha;
+            }
+        };
+
+        ImageProducer ip = new FilteredImageSource(image.getSource(), filter);
+        return Toolkit.getDefaultToolkit().createImage(ip);
     }
 
     /**
@@ -469,5 +543,6 @@ public class OverImage extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel holder;
+    private javax.swing.JPanel panelBorder;
     // End of variables declaration//GEN-END:variables
 }
