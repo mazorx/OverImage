@@ -3,7 +3,7 @@ A basic application to put an image on your screen as reference
 
 Hotkeys:
 
-Ctrl + V -> load an image;
+Ctrl + V -> load an image;/n
 Drag and drop -> load an image;
 Escape -> Exit;
 Space -> Pan image;
