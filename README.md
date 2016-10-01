@@ -1,5 +1,5 @@
 # OverImage
-A basic application to put an image on your screen as reference
+A basic application to put an image on your screen as reference for drawings and paintings
 
 Hotkeys:
 
