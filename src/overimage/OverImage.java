@@ -68,6 +68,7 @@ public class OverImage extends javax.swing.JFrame {
     boolean hvisible = true;
     boolean rendering = false;
     boolean shiftdown = false;
+    boolean fasterclickthrough = false;
     static int bordersize = 20;
     static Double bigzoomstep = 0.15;
     static Double zoomstep = 0.02;
@@ -146,6 +147,10 @@ public class OverImage extends javax.swing.JFrame {
                 if (nke.getKeyCode() == 17) {
                     unfreezePane();
                 }
+                if (nke.getKeyCode() == 18) {
+                    fasterclickthrough = !fasterclickthrough;
+                    display.setVisible(true);
+                }
                 return;
             }
 
@@ -185,14 +190,10 @@ public class OverImage extends javax.swing.JFrame {
             public void nativeMouseMoved(NativeMouseEvent nme) {
                 mx = nme.getX() - frame.getX();
                 my = nme.getY() - frame.getY();
-                if(skiprender > 3){
-                    if (!hvisible & !rendering) {
-                        rendering = true;
-                        setdisplayhole(4);
-                        rendering = false;
-                    }
-                    skiprender = 0;
-                }else{
+                if (skiprender > 0 & fasterclickthrough) {
+                    display.setVisible(false);
+                    frame.repaint();
+                } else if (!fasterclickthrough) {
                     skiprender++;
                 }
                 return;
@@ -370,6 +371,7 @@ public class OverImage extends javax.swing.JFrame {
                 } else {
                     imgalpha = 1;
                 }
+                AWTUtilities.setWindowOpacity(this, imgalpha);
                 setimgtosize();
             }
             if (evt.getKeyCode() == KeyEvent.VK_MINUS | evt.getKeyCode() == KeyEvent.VK_SUBTRACT | evt.getKeyCode() == KeyEvent.VK_A) {
@@ -378,6 +380,7 @@ public class OverImage extends javax.swing.JFrame {
                 } else {
                     imgalpha = 0.01f;
                 }
+                AWTUtilities.setWindowOpacity(this, imgalpha);
                 setimgtosize();
             }
             if (evt.getKeyCode() == KeyEvent.VK_F) {
@@ -426,6 +429,9 @@ public class OverImage extends javax.swing.JFrame {
                 imageX = 0;
                 imageY = 0;
                 defaultsize = !defaultsize;
+                if (defaultsize) {
+                    this.setSize(originalimage.getWidth(this), originalimage.getHeight(this));
+                }
                 setimgtosize();
             }
         }
@@ -610,13 +616,20 @@ public class OverImage extends javax.swing.JFrame {
         } else {
             zoom = minzoom;
         }
+        AWTUtilities.setWindowOpacity(this, imgalpha);
         setimgtosize();
     }
 
     private void setdisplayhole(int radius) {
-        holeimage = getHoleImage(sizeimage, radius);
-        display.setIcon(new ImageIcon(holeimage));
-        this.repaint();
+        if (sizeimage != null) {
+            holeimage = getHoleImage(sizeimage, radius);
+            display.setIcon(new ImageIcon(holeimage));
+            if(fasterclickthrough){
+                display.setVisible(true);
+            }else{
+                this.repaint();
+            }
+        }
     }
 
     private void setimgtosize() {
@@ -697,11 +710,9 @@ public class OverImage extends javax.swing.JFrame {
             BufferedImage holeimg = new BufferedImage(img.getWidth(this), img.getHeight(this), BufferedImage.TYPE_INT_ARGB);
             Graphics2D g2 = holeimg.createGraphics();
             g2.drawImage(img, 0, 0, img.getWidth(this), img.getHeight(this), null);
-            if (!hvisible) {
-                g2.setComposite(AlphaComposite.Clear);
-                g2.setColor(new Color(1f, 1f, 1f, 1f));
-                g2.fillRect(mx - radius, my - radius, radius*2, radius*2);
-            }
+            g2.setComposite(AlphaComposite.Clear);
+            g2.setColor(new Color(1f, 1f, 1f, 1f));
+            g2.fillRect(mx - radius, my - radius, radius * 2, radius * 2);
             g2.dispose();
             return holeimg;
         } else {
@@ -719,7 +730,6 @@ public class OverImage extends javax.swing.JFrame {
             int hhei = this.getHeight();
             int dif = 3;
             int bs = 1;
-            g2.setComposite(AlphaComposite.SrcOver.derive(imgalpha));
             g2.drawImage(srcImg, (fliph > 0 ? imageX : imageX + w), (flipv > 0 ? imageY : imageY + h), w * fliph, h * flipv, null);
             g2.setColor(new Color(1f, 1f, 1f, 0.01f));
             g2.fillRect(0, 0, wwid, hhei);
