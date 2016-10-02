@@ -14,5 +14,5 @@ F -> Flip image horizontal<br>
 V -> Flip image vertical<br>
 R -> Move window to mouse<br>
 T -> Set window size to mouse<br>
-Q -> Lock mouse interaction (Window can still be focused and is not click-through)<br>
-W -> Unlock mouse interaction<br>
+Q -> Lock mouse interaction and click through window (May be slow to respond)<br>
+W -> Unlock mouse interaction on all windows<br>
