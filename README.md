@@ -14,6 +14,5 @@ F -> Flip image horizontal<br>
 V -> Flip image vertical<br>
 R -> Move window to mouse<br>
 T -> Set window size to mouse<br>
-Q -> Lock mouse interaction and click through window (May be slow to respond and focus on image unwillingly)<br>
+Q -> Lock window interaction and click through window<br>
 W -> Unlock mouse interaction on all windows<br>
-E -> Enable faster click through (Causes a lot of flickering)<br>
