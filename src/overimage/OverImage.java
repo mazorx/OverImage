@@ -2,46 +2,25 @@ package overimage;
 
 import com.sun.awt.AWTUtilities;
 import com.sun.glass.events.KeyEvent;
-import com.sun.jna.Callback;
-import com.sun.jna.Library;
 import com.sun.jna.Native;
-import com.sun.jna.Platform;
-import com.sun.jna.Structure;
-import com.sun.jna.platform.WindowUtils;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.platform.win32.WinDef.HWND;
 import com.sun.jna.platform.win32.WinUser;
-import com.sun.jna.win32.StdCallLibrary;
-import java.awt.AWTEvent;
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Font;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.MouseInfo;
-import java.awt.Point;
-import java.awt.RenderingHints;
 import java.awt.Robot;
-import java.awt.SplashScreen;
 import java.awt.Toolkit;
-import java.awt.Window;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetDropEvent;
-import java.awt.event.AWTEventListener;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionAdapter;
 import java.awt.image.BufferedImage;
 import java.awt.image.FilteredImageSource;
 import java.awt.image.ImageFilter;
@@ -55,11 +34,9 @@ import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import java.util.Timer;
 import java.util.TimerTask;
-import javax.swing.JDialog;
 import org.jnativehook.GlobalScreen;
 import org.jnativehook.NativeHookException;
 import org.jnativehook.keyboard.NativeKeyEvent;
@@ -334,6 +311,7 @@ public class OverImage extends javax.swing.JFrame {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 formKeyPressed(evt);
             }
+
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 formKeyReleased(evt);
             }
@@ -344,28 +322,28 @@ public class OverImage extends javax.swing.JFrame {
         javax.swing.GroupLayout panelBorderLayout = new javax.swing.GroupLayout(panelBorder);
         panelBorder.setLayout(panelBorderLayout);
         panelBorderLayout.setHorizontalGroup(
-            panelBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 333, Short.MAX_VALUE)
+                panelBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGap(0, 333, Short.MAX_VALUE)
         );
         panelBorderLayout.setVerticalGroup(
-            panelBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 229, Short.MAX_VALUE)
+                panelBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGap(0, 229, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(panelBorder, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(panelBorder, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(panelBorder, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(panelBorder, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-    
+
     private void setTransparent(Component w) {
         WinDef.HWND hwnd = getHWnd(w);
         int wl = User32.INSTANCE.GetWindowLong(hwnd, WinUser.GWL_EXSTYLE);
@@ -373,7 +351,7 @@ public class OverImage extends javax.swing.JFrame {
         wl = wl | WinUser.WS_EX_LAYERED | WinUser.WS_EX_TRANSPARENT;
         User32.INSTANCE.SetWindowLong(hwnd, WinUser.GWL_EXSTYLE, wl);
     }
-    
+
     private void unsetTransparent(Component w) {
         WinDef.HWND hwnd = getHWnd(w);
         User32.INSTANCE.SetWindowLong(hwnd, WinUser.GWL_EXSTYLE, defaultwl);
@@ -387,7 +365,7 @@ public class OverImage extends javax.swing.JFrame {
         hwnd.setPointer(Native.getComponentPointer(w));
         return hwnd;
     }
-    
+
     public void freezePane() {
         setTransparent(this);
         hvisible = false;
@@ -515,15 +493,64 @@ public class OverImage extends javax.swing.JFrame {
             if (evt.getKeyCode() == KeyEvent.VK_D) {
                 imageX = 0;
                 imageY = 0;
-                defaultsize = !defaultsize;
-                if (defaultsize) {
-                    this.setSize(originalimage.getWidth(this), originalimage.getHeight(this));
-                }
+                scaleimagepercent = 1.0;
+                zoom = 1.0;
+                setThisSize(originalimage.getWidth(this), originalimage.getHeight(this));
+                setimgtosize();
+            }
+            if (evt.getKeyCode() == KeyEvent.VK_1) {
+                scaleimagepercent = 0.05;
+                zoom = 1.0;
+                int futurew = ((Double)((originalimage.getWidth(this) * zoom ) * scaleimagepercent)).intValue();
+                int futureh = ((Double)((originalimage.getHeight(this) * zoom ) * scaleimagepercent)).intValue();
+                setThisSize(futurew, futureh);
+                setimgtosize();
+            }
+            if (evt.getKeyCode() == KeyEvent.VK_2) {
+                scaleimagepercent = 0.2;
+                zoom = 1.0;
+                int futurew = ((Double)((originalimage.getWidth(this) * zoom ) * scaleimagepercent)).intValue();
+                int futureh = ((Double)((originalimage.getHeight(this) * zoom ) * scaleimagepercent)).intValue();
+                setThisSize(futurew, futureh);
+                setimgtosize();
+            }
+            if (evt.getKeyCode() == KeyEvent.VK_3) {
+                scaleimagepercent = 0.5;
+                zoom = 1.0;
+                int futurew = ((Double)((originalimage.getWidth(this) * zoom ) * scaleimagepercent)).intValue();
+                int futureh = ((Double)((originalimage.getHeight(this) * zoom ) * scaleimagepercent)).intValue();
+                setThisSize(futurew, futureh);
+                setimgtosize();
+            }
+            if (evt.getKeyCode() == KeyEvent.VK_4) {
+                scaleimagepercent = 0.8;
+                zoom = 1.0;
+                int futurew = ((Double)((originalimage.getWidth(this) * zoom ) * scaleimagepercent)).intValue();
+                int futureh = ((Double)((originalimage.getHeight(this) * zoom ) * scaleimagepercent)).intValue();
+                setThisSize(futurew, futureh);
+                setimgtosize();
+            }
+            if (evt.getKeyCode() == KeyEvent.VK_5) {
+                scaleimagepercent = 1.0;
+                zoom = 1.0;
+                int futurew = ((Double)((originalimage.getWidth(this) * zoom ) * scaleimagepercent)).intValue();
+                int futureh = ((Double)((originalimage.getHeight(this) * zoom ) * scaleimagepercent)).intValue();
+                setThisSize(futurew, futureh);
                 setimgtosize();
             }
         }
     }//GEN-LAST:event_formKeyPressed
 
+    private void setThisSize(int w, int h){
+        if(w < bordersize*2){
+            w = bordersize*2;
+        }
+        if(h < bordersize*2){
+            h = bordersize*2;
+        }
+        this.setSize(w, h);
+    }
+    
     public Image getImageFromClipboard() {
         Transferable transferable = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
         DataFlavor[] dataFlavors = transferable.getTransferDataFlavors();
@@ -679,14 +706,10 @@ public class OverImage extends javax.swing.JFrame {
                 } else {
                     imgalpha = 1;
                 }
-            } else if ((originalimage.getWidth(null) * zoom) * scaleimagepercent < originalimage.getWidth(null)) {
-                if (evt.isShiftDown()) {
-                    zoom += bigzoomstep;
-                } else {
-                    zoom += zoomstep;
-                }
+            } else if (evt.isShiftDown()) {
+                zoom += bigzoomstep;
             } else {
-                zoom = (originalimage.getWidth(null) / scaleimagepercent) / originalimage.getWidth(null);
+                zoom += zoomstep;
             }
         } else if (evt.isControlDown()) {
             if (imgalpha - alphastep >= 0.01) {
@@ -694,7 +717,7 @@ public class OverImage extends javax.swing.JFrame {
             } else {
                 imgalpha = 0.01f;
             }
-        } else if (zoom > 0.01 & (zoom - (evt.isShiftDown() ? bigzoomstep : zoomstep) > zoomstep)) {
+        } else if (((originalimage.getWidth(null) < originalimage.getHeight(null) ? originalimage.getWidth(null) : originalimage.getHeight(null)) * (zoom - (evt.isShiftDown() ? bigzoomstep : zoomstep))) * scaleimagepercent > 1) {
             if (evt.isShiftDown()) {
                 zoom -= bigzoomstep;
             } else {
@@ -719,49 +742,12 @@ public class OverImage extends javax.swing.JFrame {
         if (originalimage != null) {
             panelBorder.setBackground(new Color(1f, 1f, 1f, 0f));
             this.setBackground(new Color(1f, 1f, 1f, 0f));
-//            this.setSize(Toolkit.getDefaultToolkit().getScreenSize());
-//            this.setLocation(0, 0);
-//            holder.setSize(this.getSize());
-            if (defaultsize) {
-                scaleimagepercent = 1.0;
-                zoom = 1.0;
-            } else {
-                boolean continuar = true;
-                Double imagezsp = originalimage.getWidth(null) * zoomstep;
-                if (originalimage.getWidth(null) > originalimage.getHeight(null)) {
-                    while (continuar) {
-                        if (originalimage.getWidth(null) * (scaleimagepercent + zoomstep) > this.getWidth() + imagezsp * 2) {
-                            scaleimagepercent -= zoomstep;
-                        } else if (originalimage.getWidth(null) * (scaleimagepercent - zoomstep) < this.getWidth() - imagezsp * 2) {
-                            scaleimagepercent += zoomstep;
-                        } else {
-                            continuar = false;
-                        }
-                    }
-                    if ((originalimage.getWidth(null) * zoom) * scaleimagepercent > originalimage.getWidth(null)) {
-                        zoom = (originalimage.getWidth(null) / scaleimagepercent) / originalimage.getWidth(null);
-                    }
-                    if (this.getWidth() > originalimage.getWidth(null)) {
-                        zoom = (originalimage.getWidth(null) / scaleimagepercent) / originalimage.getWidth(null);
-                    }
-                } else {
-                    while (continuar) {
-                        if (originalimage.getHeight(null) * (scaleimagepercent + zoomstep) > this.getHeight() + imagezsp * 2) {
-                            scaleimagepercent -= zoomstep;
-                        } else if (originalimage.getHeight(null) * (scaleimagepercent - zoomstep) < this.getHeight() - imagezsp * 2) {
-                            scaleimagepercent += zoomstep;
-                        } else {
-                            continuar = false;
-                        }
-                    }
-                    if ((originalimage.getHeight(null) * zoom) * scaleimagepercent > originalimage.getHeight(null)) {
-                        zoom = (originalimage.getHeight(null) / scaleimagepercent) / originalimage.getHeight(null);
-                    }
-                    if (this.getHeight() > originalimage.getHeight(null)) {
-                        zoom = (originalimage.getHeight(null) / scaleimagepercent) / originalimage.getHeight(null);
-                    }
-                }
-            }
+            Double ow = originalimage.getWidth(null) + 0d;
+            Double tw = this.getWidth() + 0d;
+            scaleimagepercent = tw / ow;
+            boolean continuar = true;
+            Double imagezsp = originalimage.getWidth(null) * zoomstep;
+            System.out.println(scaleimagepercent);
             holder.setVisible(false);
             display.setVisible(false);
             this.repaint();
@@ -785,7 +771,6 @@ public class OverImage extends javax.swing.JFrame {
         this.repaint();
     }
 
-    
     private void drawHole() {
 //        if (holeimage != null) {
 //            Graphics2D g = (Graphics2D) holeimage.getGraphics();
