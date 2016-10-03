@@ -2,12 +2,25 @@ package overimage;
 
 import com.sun.awt.AWTUtilities;
 import com.sun.glass.events.KeyEvent;
+import com.sun.jna.Callback;
+import com.sun.jna.Library;
+import com.sun.jna.Native;
+import com.sun.jna.Platform;
+import com.sun.jna.Structure;
+import com.sun.jna.platform.WindowUtils;
+import com.sun.jna.platform.win32.User32;
+import com.sun.jna.platform.win32.WinDef;
+import com.sun.jna.platform.win32.WinDef.HWND;
+import com.sun.jna.platform.win32.WinUser;
+import com.sun.jna.win32.StdCallLibrary;
 import java.awt.AWTEvent;
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridBagLayout;
 import java.awt.Image;
@@ -46,6 +59,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import java.util.Timer;
 import java.util.TimerTask;
+import javax.swing.JDialog;
 import org.jnativehook.GlobalScreen;
 import org.jnativehook.NativeHookException;
 import org.jnativehook.keyboard.NativeKeyEvent;
@@ -75,6 +89,8 @@ public class OverImage extends javax.swing.JFrame {
     static Double minzoom = 0.01;
     int mx;
     int my;
+    int prevmx;
+    int prevmy;
     int difx = 0;
     int dify = 0;
     int prevx = 0;
@@ -89,6 +105,7 @@ public class OverImage extends javax.swing.JFrame {
     int clickedimageX = 0;
     int clickedimageY = 0;
     int skiprender = 0;
+    int defaultwl;
     float imgalpha = 1f;
     float alphastep = 0.1f;
     Image originalimage;
@@ -102,6 +119,9 @@ public class OverImage extends javax.swing.JFrame {
     NumberFormat formatter = new DecimalFormat("#0.00");
     Robot bot;
     Timer timer;
+    Timer stimer;
+    JLabel anotherhole = new JLabel();
+    int holeradius = 4;
 
     /**
      * Creates new form OverImage
@@ -112,6 +132,18 @@ public class OverImage extends javax.swing.JFrame {
             bot = new Robot();
         } catch (Exception e) {
         }
+
+        BufferedImage buraco = new BufferedImage(holeradius, holeradius, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = buraco.createGraphics();
+        g.setComposite(AlphaComposite.SrcOver);
+        g.setColor(new Color(0f, 0f, 0f, 0.5f));
+        g.fillOval(-holeradius, -holeradius, -holeradius * 2, -holeradius * 2);
+        g.dispose();
+        anotherhole.setIcon(new ImageIcon(buraco));
+        anotherhole.setLocation(holeradius, holeradius);
+        anotherhole.setSize(holeradius, holeradius);
+        panelBorder.add(anotherhole);
+
         display = new JLabel();
         display.setSize(this.getWidth(), this.getHeight());
         display.setLocation(0, 0);
@@ -125,7 +157,6 @@ public class OverImage extends javax.swing.JFrame {
             System.err.println("There was a problem registering the native hook.");
             System.err.println(ex.getMessage());
             ex.printStackTrace();
-
             System.exit(1);
         }
 
@@ -133,13 +164,28 @@ public class OverImage extends javax.swing.JFrame {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                if (!hvisible & !rendering) {
-                    rendering = true;
-                    setdisplayhole(4);
-                    rendering = false;
+                if (!hvisible) {
+//                    setdisplayhole();
                 }
             }
-        }, 15, 15);
+        }, 30, 30);
+
+        stimer = new Timer();
+        stimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                if (!hvisible) {
+                    try {
+                        mx = ((Double) frame.getMousePosition().getX()).intValue();
+                        my = ((Double) frame.getMousePosition().getY()).intValue();
+                        drawHole();
+                        prevmx = mx;
+                        prevmy = my;
+                    } catch (Exception e) {
+                    }
+                }
+            }
+        }, 1, 1);
 
         GlobalScreen.addNativeKeyListener(new NativeKeyListener() {
             @Override
@@ -168,6 +214,11 @@ public class OverImage extends javax.swing.JFrame {
         GlobalScreen.addNativeMouseMotionListener(new NativeMouseInputListener() {
             @Override
             public void nativeMouseClicked(NativeMouseEvent nme) {
+                mx = nme.getX() - frame.getX();
+                my = nme.getY() - frame.getY();
+                drawHole();
+                prevmx = mx;
+                prevmy = my;
                 return;
             }
 
@@ -175,14 +226,19 @@ public class OverImage extends javax.swing.JFrame {
             public void nativeMousePressed(NativeMouseEvent nme) {
                 mx = nme.getX() - frame.getX();
                 my = nme.getY() - frame.getY();
-                if (!hvisible) {
-                    setdisplayhole(4);
-                }
+                drawHole();
+                prevmx = mx;
+                prevmy = my;
                 return;
             }
 
             @Override
             public void nativeMouseReleased(NativeMouseEvent nme) {
+                mx = nme.getX() - frame.getX();
+                my = nme.getY() - frame.getY();
+                drawHole();
+                prevmx = mx;
+                prevmy = my;
                 return;
             }
 
@@ -190,17 +246,24 @@ public class OverImage extends javax.swing.JFrame {
             public void nativeMouseMoved(NativeMouseEvent nme) {
                 mx = nme.getX() - frame.getX();
                 my = nme.getY() - frame.getY();
-                if (skiprender > 0 & fasterclickthrough) {
-                    display.setVisible(false);
-                    frame.repaint();
-                } else if (!fasterclickthrough) {
+                if (skiprender > 1) {
+                    drawHole();
+                    skiprender = 0;
+                } else {
                     skiprender++;
                 }
+                prevmx = mx;
+                prevmy = my;
                 return;
             }
 
             @Override
             public void nativeMouseDragged(NativeMouseEvent nme) {
+                mx = nme.getX() - frame.getX();
+                my = nme.getY() - frame.getY();
+                drawHole();
+                prevmx = mx;
+                prevmy = my;
                 return;
             }
         });
@@ -302,8 +365,31 @@ public class OverImage extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+    
+    private void setTransparent(Component w) {
+        WinDef.HWND hwnd = getHWnd(w);
+        int wl = User32.INSTANCE.GetWindowLong(hwnd, WinUser.GWL_EXSTYLE);
+        defaultwl = wl;
+        wl = wl | WinUser.WS_EX_LAYERED | WinUser.WS_EX_TRANSPARENT;
+        User32.INSTANCE.SetWindowLong(hwnd, WinUser.GWL_EXSTYLE, wl);
+    }
+    
+    private void unsetTransparent(Component w) {
+        WinDef.HWND hwnd = getHWnd(w);
+        User32.INSTANCE.SetWindowLong(hwnd, WinUser.GWL_EXSTYLE, defaultwl);
+    }
 
+    /**
+     * Get the window handle from the OS
+     */
+    private static HWND getHWnd(Component w) {
+        HWND hwnd = new HWND();
+        hwnd.setPointer(Native.getComponentPointer(w));
+        return hwnd;
+    }
+    
     public void freezePane() {
+        setTransparent(this);
         hvisible = false;
         holder.setVisible(false);
         this.setCursor(0);
@@ -311,6 +397,7 @@ public class OverImage extends javax.swing.JFrame {
     }
 
     public void unfreezePane() {
+        unsetTransparent(this);
         hvisible = true;
         holder.setVisible(true);
         this.repaint();
@@ -620,15 +707,11 @@ public class OverImage extends javax.swing.JFrame {
         setimgtosize();
     }
 
-    private void setdisplayhole(int radius) {
+    private void setdisplayhole() {
         if (sizeimage != null) {
-            holeimage = getHoleImage(sizeimage, radius);
+            holeimage = getHoleImage(sizeimage);
             display.setIcon(new ImageIcon(holeimage));
-            if(fasterclickthrough){
-                display.setVisible(true);
-            }else{
-                this.repaint();
-            }
+            this.repaint();
         }
     }
 
@@ -702,17 +785,26 @@ public class OverImage extends javax.swing.JFrame {
         this.repaint();
     }
 
-//    private Image makeaHole(Image srcImg, int w, int h){
-//        
-//    }
-    private Image getHoleImage(Image img, int radius) {
+    
+    private void drawHole() {
+//        if (holeimage != null) {
+//            Graphics2D g = (Graphics2D) holeimage.getGraphics();
+//            g.setComposite(AlphaComposite.Clear);
+//            g.setColor(new Color(1f, 1f, 1f, 1f));
+//            g.fillOval(mx - holeradius, my - holeradius, holeradius * 2, holeradius * 2);
+//            g.fillOval(mx - holeradius + ((mx - prevmx)), my - holeradius + ((my - prevmy)), holeradius * 2, holeradius * 2);
+//            g.dispose();
+//        }
+    }
+
+    private Image getHoleImage(Image img) {
         if (img != null) {
             BufferedImage holeimg = new BufferedImage(img.getWidth(this), img.getHeight(this), BufferedImage.TYPE_INT_ARGB);
             Graphics2D g2 = holeimg.createGraphics();
             g2.drawImage(img, 0, 0, img.getWidth(this), img.getHeight(this), null);
             g2.setComposite(AlphaComposite.Clear);
             g2.setColor(new Color(1f, 1f, 1f, 1f));
-            g2.fillRect(mx - radius, my - radius, radius * 2, radius * 2);
+            g2.fillOval(mx - holeradius, my - holeradius, holeradius * 2, holeradius * 2);
             g2.dispose();
             return holeimg;
         } else {
