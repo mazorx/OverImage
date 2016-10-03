@@ -9,6 +9,7 @@ Escape -> Exit<br>
 Space -> Pan image<br>
 Mouse Wheel or Z/X -> Zoom in/out<br>
 +/- or A/S or Ctrl + Mouse Wheel -> Alter opacity<br>
+1, 2, 3, 4, 5 -> Set zoom at 5%,20%,50%,80%,100%
 D -> Set image to default size<br>
 F -> Flip image horizontal<br>
 V -> Flip image vertical<br>
