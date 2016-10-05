@@ -79,6 +79,8 @@ public class OverImage extends javax.swing.JFrame {
     int flipv = 1;
     int imageX = 0;
     int imageY = 0;
+    int showingX = 0;
+    int showingY = 0;
     int clickedimageX = 0;
     int clickedimageY = 0;
     int skiprender = 0;
@@ -740,11 +742,15 @@ public class OverImage extends javax.swing.JFrame {
 
     private void setimgtosize() {
         if (originalimage != null) {
+            int curw = ((Double) ((originalimage.getWidth(null) * zoom) * scaleimagepercent)).intValue();
+            int curh = ((Double) ((originalimage.getHeight(null) * zoom) * scaleimagepercent)).intValue();
             panelBorder.setBackground(new Color(1f, 1f, 1f, 0f));
             this.setBackground(new Color(1f, 1f, 1f, 0f));
             Double ow = originalimage.getWidth(null) + 0d;
             Double tw = this.getWidth() + 0d;
             scaleimagepercent = tw / ow;
+            showingX = ((Double)((imageX * zoom) * scaleimagepercent)).intValue();
+            showingY = ((Double)((imageY * zoom) * scaleimagepercent)).intValue();
             boolean continuar = true;
             Double imagezsp = originalimage.getWidth(null) * zoomstep;
             System.out.println(scaleimagepercent);
@@ -807,7 +813,7 @@ public class OverImage extends javax.swing.JFrame {
             int hhei = this.getHeight();
             int dif = 3;
             int bs = 1;
-            g2.drawImage(srcImg, (fliph > 0 ? imageX : imageX + w), (flipv > 0 ? imageY : imageY + h), w * fliph, h * flipv, null);
+            g2.drawImage(srcImg, (fliph > 0 ? showingX : showingX + w), (flipv > 0 ? showingY : showingY + h), w * fliph, h * flipv, null);
             g2.setColor(new Color(1f, 1f, 1f, 0.01f));
             g2.fillRect(0, 0, wwid, hhei);
             g2.setColor(new Color(0.2f, 0.2f, 0.2f, 1f));
