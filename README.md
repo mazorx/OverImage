@@ -17,3 +17,4 @@ R -> Move window to mouse<br>
 T -> Set window size to mouse<br>
 Q -> Lock window interaction and click through window<br>
 W -> Unlock mouse interaction on all windows<br>
+E -> Lock/unlock scaling with window size<br>
