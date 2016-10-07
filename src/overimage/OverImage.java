@@ -60,10 +60,11 @@ public class OverImage extends javax.swing.JFrame {
     boolean rendering = false;
     boolean shiftdown = false;
     boolean fasterclickthrough = false;
+    boolean locksize = false;
     static int bordersize = 20;
-    static Double bigzoomstep = 0.15;
-    static Double zoomstep = 0.02;
-    static Double minzoom = 0.01;
+    static Double bigzoomstep = 0.85;
+    static Double zoomstep = 0.95;
+    static Double minzoom = 0.001;
     int mx;
     int my;
     int prevmx;
@@ -169,12 +170,8 @@ public class OverImage extends javax.swing.JFrame {
         GlobalScreen.addNativeKeyListener(new NativeKeyListener() {
             @Override
             public void nativeKeyPressed(NativeKeyEvent nke) {
-                if (nke.getKeyCode() == 17) {
+                if (nke.getKeyCode() == NativeKeyEvent.VC_W) {
                     unfreezePane();
-                }
-                if (nke.getKeyCode() == 18) {
-                    fasterclickthrough = !fasterclickthrough;
-                    display.setVisible(true);
                 }
                 return;
             }
@@ -377,10 +374,12 @@ public class OverImage extends javax.swing.JFrame {
     }
 
     public void unfreezePane() {
-        unsetTransparent(this);
-        hvisible = true;
-        holder.setVisible(true);
-        this.repaint();
+        if (hvisible == false) {
+            unsetTransparent(this);
+            hvisible = true;
+            holder.setVisible(true);
+            this.repaint();
+        }
     }
 
     private void formKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_formKeyPressed
@@ -401,6 +400,11 @@ public class OverImage extends javax.swing.JFrame {
             if (evt.getKeyCode() == KeyEvent.VK_Q) {
                 freezePane();
             }
+
+            if (evt.getKeyCode() == KeyEvent.VK_E) {
+                locksize = !locksize;
+                setimgtosize();
+            }
             if (evt.getKeyCode() == KeyEvent.VK_SPACE) {
                 if (hvisible) {
                     draging = true;
@@ -409,23 +413,19 @@ public class OverImage extends javax.swing.JFrame {
                 }
             }
             if (evt.getKeyCode() == KeyEvent.VK_Z) {
-                if ((originalimage.getWidth(null) * zoom) * scaleimagepercent < originalimage.getWidth(null)) {
-                    if (evt.isShiftDown()) {
-                        zoom += bigzoomstep;
-                    } else {
-                        zoom += zoomstep;
-                    }
+                if (evt.isShiftDown()) {
+                    zoom /= bigzoomstep;
                 } else {
-                    zoom = (originalimage.getWidth(null) / scaleimagepercent) / originalimage.getWidth(null);
+                    zoom /= zoomstep;
                 }
                 setimgtosize();
             }
-            if (evt.getKeyCode() == KeyEvent.VK_X) {
-                if (zoom > 0.01 & (zoom - (evt.isShiftDown() ? bigzoomstep : zoomstep) > zoomstep)) {
+            if (evt.getKeyCode() == KeyEvent.VK_X) {;
+                if (zoom * (evt.isShiftDown() ? bigzoomstep : zoomstep) > minzoom) {
                     if (evt.isShiftDown()) {
-                        zoom -= bigzoomstep;
+                        zoom *= bigzoomstep;
                     } else {
-                        zoom -= zoomstep;
+                        zoom *= zoomstep;
                     }
                 } else {
                     zoom = minzoom;
@@ -501,58 +501,68 @@ public class OverImage extends javax.swing.JFrame {
                 setimgtosize();
             }
             if (evt.getKeyCode() == KeyEvent.VK_1) {
-                scaleimagepercent = 0.05;
+                if(!locksize){
+                    scaleimagepercent = 0.05;
+                }
                 zoom = 1.0;
-                int futurew = ((Double)((originalimage.getWidth(this) * zoom ) * scaleimagepercent)).intValue();
-                int futureh = ((Double)((originalimage.getHeight(this) * zoom ) * scaleimagepercent)).intValue();
+                int futurew = ((Double) ((originalimage.getWidth(this) * zoom) * scaleimagepercent)).intValue();
+                int futureh = ((Double) ((originalimage.getHeight(this) * zoom) * scaleimagepercent)).intValue();
                 setThisSize(futurew, futureh);
                 setimgtosize();
             }
             if (evt.getKeyCode() == KeyEvent.VK_2) {
-                scaleimagepercent = 0.2;
+                if(!locksize){
+                    scaleimagepercent = 0.2;
+                }
                 zoom = 1.0;
-                int futurew = ((Double)((originalimage.getWidth(this) * zoom ) * scaleimagepercent)).intValue();
-                int futureh = ((Double)((originalimage.getHeight(this) * zoom ) * scaleimagepercent)).intValue();
+                int futurew = ((Double) ((originalimage.getWidth(this) * zoom) * 0.2)).intValue();
+                int futureh = ((Double) ((originalimage.getHeight(this) * zoom) * 0.2)).intValue();
                 setThisSize(futurew, futureh);
                 setimgtosize();
             }
             if (evt.getKeyCode() == KeyEvent.VK_3) {
-                scaleimagepercent = 0.5;
+                if(!locksize){
+                    scaleimagepercent = 0.5;
+                }
                 zoom = 1.0;
-                int futurew = ((Double)((originalimage.getWidth(this) * zoom ) * scaleimagepercent)).intValue();
-                int futureh = ((Double)((originalimage.getHeight(this) * zoom ) * scaleimagepercent)).intValue();
+                int futurew = ((Double) ((originalimage.getWidth(this) * zoom) * 0.5)).intValue();
+                int futureh = ((Double) ((originalimage.getHeight(this) * zoom) * 0.5)).intValue();
                 setThisSize(futurew, futureh);
                 setimgtosize();
             }
             if (evt.getKeyCode() == KeyEvent.VK_4) {
-                scaleimagepercent = 0.8;
+                if(!locksize){
+                    scaleimagepercent = 0.8;
+                }
                 zoom = 1.0;
-                int futurew = ((Double)((originalimage.getWidth(this) * zoom ) * scaleimagepercent)).intValue();
-                int futureh = ((Double)((originalimage.getHeight(this) * zoom ) * scaleimagepercent)).intValue();
+                int futurew = ((Double) ((originalimage.getWidth(this) * zoom) * 0.8)).intValue();
+                int futureh = ((Double) ((originalimage.getHeight(this) * zoom) * 0.8)).intValue();
                 setThisSize(futurew, futureh);
                 setimgtosize();
             }
             if (evt.getKeyCode() == KeyEvent.VK_5) {
-                scaleimagepercent = 1.0;
+                if(!locksize){
+                    scaleimagepercent = 1.0;
+                }
                 zoom = 1.0;
-                int futurew = ((Double)((originalimage.getWidth(this) * zoom ) * scaleimagepercent)).intValue();
-                int futureh = ((Double)((originalimage.getHeight(this) * zoom ) * scaleimagepercent)).intValue();
+                int futurew = ((Double) ((originalimage.getWidth(this) * zoom) * 1)).intValue();
+                int futureh = ((Double) ((originalimage.getHeight(this) * zoom) * 1)).intValue();
                 setThisSize(futurew, futureh);
                 setimgtosize();
             }
         }
     }//GEN-LAST:event_formKeyPressed
 
-    private void setThisSize(int w, int h){
-        if(w < bordersize*2){
-            w = bordersize*2;
+    private void setThisSize(int w, int h) {
+        if (w < bordersize * 2) {
+            w = bordersize * 2;
         }
-        if(h < bordersize*2){
-            h = bordersize*2;
+        if (h < bordersize * 2) {
+            h = bordersize * 2;
         }
         this.setSize(w, h);
     }
-    
+
     public Image getImageFromClipboard() {
         Transferable transferable = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
         DataFlavor[] dataFlavors = transferable.getTransferDataFlavors();
@@ -588,8 +598,8 @@ public class OverImage extends javax.swing.JFrame {
 
     private void holderMouseDragged(java.awt.event.MouseEvent evt) {
         if (draging) {
-            imageX = clickedimageX + (evt.getXOnScreen() - clickedx);
-            imageY = clickedimageY + (evt.getYOnScreen() - clickedy);
+            imageX = ((Double) ((clickedimageX + (((evt.getXOnScreen() - clickedx) / scaleimagepercent) / zoom)))).intValue();
+            imageY = ((Double) ((clickedimageY + (((evt.getYOnScreen() - clickedy) / scaleimagepercent) / zoom)))).intValue();
         } else if (scalingx | scalingy) {
             int movingx = (evt.getXOnScreen() - clickedx);
             int movingy = (evt.getYOnScreen() - clickedy);
@@ -709,9 +719,9 @@ public class OverImage extends javax.swing.JFrame {
                     imgalpha = 1;
                 }
             } else if (evt.isShiftDown()) {
-                zoom += bigzoomstep;
+                zoom /= bigzoomstep;
             } else {
-                zoom += zoomstep;
+                zoom /= zoomstep;
             }
         } else if (evt.isControlDown()) {
             if (imgalpha - alphastep >= 0.01) {
@@ -719,13 +729,13 @@ public class OverImage extends javax.swing.JFrame {
             } else {
                 imgalpha = 0.01f;
             }
-        } else if (((originalimage.getWidth(null) < originalimage.getHeight(null) ? originalimage.getWidth(null) : originalimage.getHeight(null)) * (zoom - (evt.isShiftDown() ? bigzoomstep : zoomstep))) * scaleimagepercent > 1) {
+        } else if (zoom * (evt.isShiftDown() ? bigzoomstep : zoomstep) > minzoom) {
             if (evt.isShiftDown()) {
-                zoom -= bigzoomstep;
+                zoom *= bigzoomstep;
             } else {
-                zoom -= zoomstep;
+                zoom *= zoomstep;
             }
-        } else {
+        } else if (zoom != minzoom) {
             zoom = minzoom;
         }
         AWTUtilities.setWindowOpacity(this, imgalpha);
@@ -748,9 +758,17 @@ public class OverImage extends javax.swing.JFrame {
             this.setBackground(new Color(1f, 1f, 1f, 0f));
             Double ow = originalimage.getWidth(null) + 0d;
             Double tw = this.getWidth() + 0d;
-            scaleimagepercent = tw / ow;
-            showingX = ((Double)((imageX * zoom) * scaleimagepercent)).intValue();
-            showingY = ((Double)((imageY * zoom) * scaleimagepercent)).intValue();
+            if (!locksize) {
+                scaleimagepercent = tw / ow;
+            }
+            int center;
+            if (originalimage.getWidth(null) > originalimage.getHeight(null)) {
+                center = (((Double) ((this.getWidth() / 2) * zoom)).intValue() - (this.getWidth() / 2));
+            } else {
+                center = (((Double) ((this.getHeight() / 2) * zoom)).intValue() - (this.getHeight() / 2));
+            }
+            showingX = ((Double) ((imageX * zoom) * scaleimagepercent)).intValue() - center;
+            showingY = ((Double) ((imageY * zoom) * scaleimagepercent)).intValue() - center;
             boolean continuar = true;
             Double imagezsp = originalimage.getWidth(null) * zoomstep;
             System.out.println(scaleimagepercent);
