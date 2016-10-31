@@ -37,6 +37,9 @@ import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import java.util.Timer;
 import java.util.TimerTask;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.border.Border;
 import org.jnativehook.GlobalScreen;
 import org.jnativehook.NativeHookException;
 import org.jnativehook.keyboard.NativeKeyEvent;
@@ -88,9 +91,9 @@ public class OverImage extends javax.swing.JFrame {
     int defaultwl;
     float imgalpha = 1f;
     float alphastep = 0.1f;
-    Image originalimage;
-    Image sizeimage;
-    Image holeimage;
+    ImageIcon originalimage;
+    ImageIcon sizeimage;
+    BufferedImage imageicon;
     JFrame frame = this;
     JLabel display;
     JLabel holder;
@@ -100,7 +103,6 @@ public class OverImage extends javax.swing.JFrame {
     Robot bot;
     Timer timer;
     Timer stimer;
-    JLabel anotherhole = new JLabel();
     int holeradius = 4;
 
     /**
@@ -112,17 +114,6 @@ public class OverImage extends javax.swing.JFrame {
             bot = new Robot();
         } catch (Exception e) {
         }
-
-        BufferedImage buraco = new BufferedImage(holeradius, holeradius, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = buraco.createGraphics();
-        g.setComposite(AlphaComposite.SrcOver);
-        g.setColor(new Color(0f, 0f, 0f, 0.5f));
-        g.fillOval(-holeradius, -holeradius, -holeradius * 2, -holeradius * 2);
-        g.dispose();
-        anotherhole.setIcon(new ImageIcon(buraco));
-        anotherhole.setLocation(holeradius, holeradius);
-        anotherhole.setSize(holeradius, holeradius);
-        panelBorder.add(anotherhole);
 
         display = new JLabel();
         display.setSize(this.getWidth(), this.getHeight());
@@ -247,6 +238,10 @@ public class OverImage extends javax.swing.JFrame {
         holder = new JLabel();
         panelBorder.add(holder);
         panelBorder.add(display);
+        Border border = BorderFactory.createLineBorder(Color.GRAY, 2);
+        display.setBorder(border);
+        display.setOpaque(true);
+        display.setBackground(new Color(1f,1f,1f,0.01f));
         holder.setSize(this.getWidth(), this.getHeight());
         holder.setLocation(0, 0);
         holder.setHorizontalAlignment(SwingConstants.LEFT);
@@ -280,7 +275,7 @@ public class OverImage extends javax.swing.JFrame {
                     List<File> droppedFiles = (List<File>) evt.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
                     imageX = 0;
                     imageY = 0;
-                    originalimage = ImageIO.read(droppedFiles.get(0));
+                    originalimage = new ImageIcon(droppedFiles.get(0).getPath());
                     setimgtosize();
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -497,7 +492,7 @@ public class OverImage extends javax.swing.JFrame {
                 imageY = 0;
                 scaleimagepercent = 1.0;
                 zoom = 1.0;
-                setThisSize(originalimage.getWidth(this), originalimage.getHeight(this));
+                setThisSize(originalimage.getImage().getWidth(this), originalimage.getImage().getHeight(this));
                 setimgtosize();
             }
             if (evt.getKeyCode() == KeyEvent.VK_1) {
@@ -505,8 +500,8 @@ public class OverImage extends javax.swing.JFrame {
                     scaleimagepercent = 0.05;
                 }
                 zoom = 1.0;
-                int futurew = ((Double) ((originalimage.getWidth(this) * zoom) * scaleimagepercent)).intValue();
-                int futureh = ((Double) ((originalimage.getHeight(this) * zoom) * scaleimagepercent)).intValue();
+                int futurew = ((Double) ((originalimage.getImage().getWidth(this) * zoom) * scaleimagepercent)).intValue();
+                int futureh = ((Double) ((originalimage.getImage().getHeight(this) * zoom) * scaleimagepercent)).intValue();
                 setThisSize(futurew, futureh);
                 setimgtosize();
             }
@@ -515,8 +510,8 @@ public class OverImage extends javax.swing.JFrame {
                     scaleimagepercent = 0.2;
                 }
                 zoom = 1.0;
-                int futurew = ((Double) ((originalimage.getWidth(this) * zoom) * 0.2)).intValue();
-                int futureh = ((Double) ((originalimage.getHeight(this) * zoom) * 0.2)).intValue();
+                int futurew = ((Double) ((originalimage.getImage().getWidth(this) * zoom) * 0.2)).intValue();
+                int futureh = ((Double) ((originalimage.getImage().getHeight(this) * zoom) * 0.2)).intValue();
                 setThisSize(futurew, futureh);
                 setimgtosize();
             }
@@ -525,8 +520,8 @@ public class OverImage extends javax.swing.JFrame {
                     scaleimagepercent = 0.5;
                 }
                 zoom = 1.0;
-                int futurew = ((Double) ((originalimage.getWidth(this) * zoom) * 0.5)).intValue();
-                int futureh = ((Double) ((originalimage.getHeight(this) * zoom) * 0.5)).intValue();
+                int futurew = ((Double) ((originalimage.getImage().getWidth(this) * zoom) * 0.5)).intValue();
+                int futureh = ((Double) ((originalimage.getImage().getHeight(this) * zoom) * 0.5)).intValue();
                 setThisSize(futurew, futureh);
                 setimgtosize();
             }
@@ -535,8 +530,8 @@ public class OverImage extends javax.swing.JFrame {
                     scaleimagepercent = 0.8;
                 }
                 zoom = 1.0;
-                int futurew = ((Double) ((originalimage.getWidth(this) * zoom) * 0.8)).intValue();
-                int futureh = ((Double) ((originalimage.getHeight(this) * zoom) * 0.8)).intValue();
+                int futurew = ((Double) ((originalimage.getImage().getWidth(this) * zoom) * 0.8)).intValue();
+                int futureh = ((Double) ((originalimage.getImage().getHeight(this) * zoom) * 0.8)).intValue();
                 setThisSize(futurew, futureh);
                 setimgtosize();
             }
@@ -545,8 +540,8 @@ public class OverImage extends javax.swing.JFrame {
                     scaleimagepercent = 1.0;
                 }
                 zoom = 1.0;
-                int futurew = ((Double) ((originalimage.getWidth(this) * zoom) * 1)).intValue();
-                int futureh = ((Double) ((originalimage.getHeight(this) * zoom) * 1)).intValue();
+                int futurew = ((Double) ((originalimage.getImage().getWidth(this) * zoom) * 1)).intValue();
+                int futureh = ((Double) ((originalimage.getImage().getHeight(this) * zoom) * 1)).intValue();
                 setThisSize(futurew, futureh);
                 setimgtosize();
             }
@@ -563,12 +558,13 @@ public class OverImage extends javax.swing.JFrame {
         this.setSize(w, h);
     }
 
-    public Image getImageFromClipboard() {
+    public ImageIcon getImageFromClipboard() {
         Transferable transferable = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
         DataFlavor[] dataFlavors = transferable.getTransferDataFlavors();
         if (transferable != null && transferable.isDataFlavorSupported(DataFlavor.imageFlavor)) {
             try {
-                return (Image) transferable.getTransferData(DataFlavor.imageFlavor);
+                java.util.List list = (java.util.List) transferable.getTransferData(DataFlavor.javaFileListFlavor);
+                return new ImageIcon(((File) list.get(0)).getPath());
             } catch (Exception e) {
                 // handle this as desired
                 e.printStackTrace();
@@ -576,7 +572,7 @@ public class OverImage extends javax.swing.JFrame {
         } else if (transferable != null && transferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
             try {
                 java.util.List list = (java.util.List) transferable.getTransferData(DataFlavor.javaFileListFlavor);
-                return ImageIO.read((File) list.get(0));
+                return new ImageIcon(((File) list.get(0)).getPath());
             } catch (Exception e) {
                 e.printStackTrace();
                 System.err.println("getImageFromClipboard: That wasn't an image!");
@@ -709,6 +705,7 @@ public class OverImage extends javax.swing.JFrame {
     private void formWindowOpened(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowOpened
         // TODO add your handling code here:
     }//GEN-LAST:event_formWindowOpened
+    
 
     private void holderMouseWheelMoved(java.awt.event.MouseWheelEvent evt) {
         if (evt.getWheelRotation() < 0) {
@@ -742,27 +739,19 @@ public class OverImage extends javax.swing.JFrame {
         setimgtosize();
     }
 
-    private void setdisplayhole() {
-        if (sizeimage != null) {
-            holeimage = getHoleImage(sizeimage);
-            display.setIcon(new ImageIcon(holeimage));
-            this.repaint();
-        }
-    }
-
     private void setimgtosize() {
         if (originalimage != null) {
-            int curw = ((Double) ((originalimage.getWidth(null) * zoom) * scaleimagepercent)).intValue();
-            int curh = ((Double) ((originalimage.getHeight(null) * zoom) * scaleimagepercent)).intValue();
+            int curw = ((Double) ((originalimage.getImage().getWidth(null) * zoom) * scaleimagepercent)).intValue();
+            int curh = ((Double) ((originalimage.getImage().getHeight(null) * zoom) * scaleimagepercent)).intValue();
             panelBorder.setBackground(new Color(1f, 1f, 1f, 0f));
             this.setBackground(new Color(1f, 1f, 1f, 0f));
-            Double ow = originalimage.getWidth(null) + 0d;
+            Double ow = originalimage.getImage().getWidth(null) + 0d;
             Double tw = this.getWidth() + 0d;
             if (!locksize) {
                 scaleimagepercent = tw / ow;
             }
             int center;
-            if (originalimage.getWidth(null) > originalimage.getHeight(null)) {
+            if (originalimage.getImage().getWidth(null) > originalimage.getImage().getHeight(null)) {
                 center = (((Double) ((this.getWidth() / 2) * zoom)).intValue() - (this.getWidth() / 2));
             } else {
                 center = (((Double) ((this.getHeight() / 2) * zoom)).intValue() - (this.getHeight() / 2));
@@ -770,19 +759,20 @@ public class OverImage extends javax.swing.JFrame {
             showingX = ((Double) ((imageX * zoom) * scaleimagepercent)).intValue() - center;
             showingY = ((Double) ((imageY * zoom) * scaleimagepercent)).intValue() - center;
             boolean continuar = true;
-            Double imagezsp = originalimage.getWidth(null) * zoomstep;
+            Double imagezsp = originalimage.getImage().getWidth(null) * zoomstep;
             System.out.println(scaleimagepercent);
             holder.setVisible(false);
             display.setVisible(false);
             this.repaint();
             holder.setLocation(0, 0);
             holder.setSize(this.getSize());
-            sizeimage = getScaleImage(originalimage, ((Double) ((originalimage.getWidth(null) * zoom) * scaleimagepercent)).intValue(), ((Double) ((originalimage.getHeight(null) * zoom) * scaleimagepercent)).intValue());
-            holder.setIcon(new ImageIcon(sizeimage));
+            sizeimage = new ImageIcon(originalimage.getImage().getScaledInstance(((Double) ((originalimage.getImage().getWidth(null) * zoom) * scaleimagepercent)).intValue(), ((Double) ((originalimage.getImage().getHeight(null) * zoom) * scaleimagepercent)).intValue(), Image.SCALE_DEFAULT));
+//            sizeimage = getScaleImage(originalimage, ((Double) ((originalimage.getWidth(null) * zoom) * scaleimagepercent)).intValue(), ((Double) ((originalimage.getHeight(null) * zoom) * scaleimagepercent)).intValue());
+            holder.setIcon(sizeimage);
 
             display.setLocation(0, 0);
             display.setSize(this.getSize());
-            display.setIcon(new ImageIcon(sizeimage));
+            display.setIcon(sizeimage);
         }
         holder.setLocation(0, 0);
         holder.setSize(this.getSize());
